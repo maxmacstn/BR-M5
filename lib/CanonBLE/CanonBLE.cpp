@@ -94,7 +94,16 @@ bool CanonBLE::connect_to_device() {
                 delay(500);
                 return true;
             }
+            else {
+                log_e("Couldn't acquire the pairing or shutter service");
+            }
         }
+        else {
+            log_e("Couldn't acquire the remote main service");
+        }
+    }
+    else {
+        log_e("Couldn't connect the BLEClient to the device");
     }
     return false;
 }
