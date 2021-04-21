@@ -22,12 +22,28 @@ void advdCallback::onResult(BLEAdvertisedDevice advertisedDevice) {
     }
 }
 
+void ConnectivityState::onConnect(BLEClient* pclient) {
+    Serial.println("Connection state switched to true.");
+    connected = true;
+}
+
+void ConnectivityState::onDisconnect(BLEClient* pclient) {
+    Serial.println("Connection state switched to false.");
+    connected = false;
+}
+
+bool ConnectivityState::isConnected() {
+    return connected;
+}
+
 CanonBLE::CanonBLE(String name) :
     SERVICE_UUID("00050000-0000-1000-0000-d8492fffa821"),
     PAIRING_SERVICE("00050002-0000-1000-0000-d8492fffa821"),
     SHUTTER_CONTROL_SERVICE("00050003-0000-1000-0000-d8492fffa821")
 {
     device_name = name;
+    // Add our connection callback for state tracking. 
+    pclient->setClientCallbacks(pconnection_state);
 }
 
 // Purpose : Scanning for new BLE devices around.
@@ -83,6 +99,14 @@ bool CanonBLE::connect_to_device() {
     return false;
 }
 
+void CanonBLE::disconnect() {
+    pclient->disconnect();
+}
+
+bool CanonBLE::is_connected() {
+    return pconnection_state->isConnected();
+}
+
 void CanonBLE::trigger(){
     byte cmdByte[] = {MODE_IMMEDIATE|BUTTON_RELEASE}; // Binary OR : Concatenate Mode and Button
     pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte), false);   // Set the characteristic's value to be the array of bytes that is actually a string.
@@ -101,4 +125,10 @@ void CanonBLE::trigger(){
         connected = true;
     }
     */
+}
+
+void CanonBLE::print_service_description(){
+    std::string desc_std = pRemoteService->toString();
+    String description = desc_std.c_str();
+    Serial.println(description);
 }

@@ -18,6 +18,25 @@ The BR-M5 has been primarily developed for the Canon M50 Mark I, which misses a 
 * To change the interval, press the right-side button for half a second and use the same button to increase and the center button to decrease the timelapse interval. Once set, press the right-side button for half a second again.
 * Start and stop time-lapses using the center button. The remote takes single shots if the interval is set to 0 seconds.
 
+
+## Background Info
+
+https://iandouglasscott.com/2017/09/04/reverse-engineering-the-canon-t7i-s-bluetooth-work-in-progress/
+
+https://iandouglasscott.com/2018/07/04/canon-dslr-bluetooth-remote-protocol/
+
+https://randomnerdtutorials.com/esp32-bluetooth-low-energy-ble-arduino-ide/
+
+https://github.com/espressif/arduino-esp32/issues/893
+
+https://github.com/espressif/arduino-esp32/issues/3721
+
+Connection times out after 180s (3m) regardless of trigger input.
+
+Reconnecting within a 3m window works, but once the window elapses stops working. 
+
+Reconnecting after 3 minutes does not work. 
+
 ## To-do
 
 - [ ] Fix connection reliability issues.

@@ -2,6 +2,11 @@
 #include "CanonBLE.h"
 #include "Display.h"
 #include "TimeLapse_Management.h"
+#include <Arduino.h>
+
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include "esp_log.h"
+#include <esp32-hal-log.h>
 
 String name_remote = "BR-M5";
 Display M5_display(&M5.Lcd, name_remote);
@@ -9,31 +14,6 @@ CanonBLE canon_ble(name_remote);
 TimeLapse timelapse(400);
 
 enum RemoteMode {Settings, Shooting}current_mode;
-
-void setup()
-{
-    Serial.begin(115200);
-    M5.begin();
-    current_mode = Shooting;
-    M5.Axp.ScreenBreath(9);
-    M5.Lcd.setRotation(1);
-    M5_display.set_init_screen();
-
-    
-    while (! canon_ble.is_ready_to_connect())
-    {
-        canon_ble.scan(5);
-    }
-    Serial.print("Canon device found: ");
-    Serial.println(canon_ble.get_device_address().toString().c_str());
-    
-    if (canon_ble.connect_to_device())
-    {
-        M5_display.set_address(canon_ble.get_device_address().toString().c_str());
-        M5_display.set_main_menu_screen(timelapse.get_interval(), "Ready for single shot");
-        Serial.println("Connected successfully");
-    }
-}
 
 void update_shooting()
 {
@@ -86,11 +66,29 @@ void update_settings()
     }
 }
 
-void loop()
-{
-    // Update buttons state
-    M5.update();
+void connect_loop(){
+    while (! canon_ble.is_ready_to_connect())
+    {
+        log_i("Scanning.");
+        canon_ble.scan(5);
+    }
 
+
+    log_i("Canon device found: ");
+    Serial.println(canon_ble.get_device_address().toString().c_str());
+    log_i("Trying to connect.");
+    if (canon_ble.connect_to_device())
+    {
+        log_i("Connected successfully");
+        M5_display.set_address(canon_ble.get_device_address().toString().c_str());
+        M5_display.set_main_menu_screen(timelapse.get_interval(), "Ready for single shot");
+    }
+    else { 
+        log_e("failed to connect");
+    }
+}
+
+void trigger_loop(){
     switch (current_mode)
     {
     case Settings:
@@ -123,5 +121,83 @@ void loop()
     default:
         break;
     }
+}
+
+void try_connect() {
+    bool connected = false;
+    while (!connected) {
+        Serial.println("Trying to connect.");
+        if (canon_ble.connect_to_device())
+        {
+            Serial.println("Connected successfully");
+            connected = true; 
+        }
+        else { 
+            Serial.println("Failed to connect.");
+        }
+    }
+}
+
+void test_reconnect() {
+    while (! canon_ble.is_ready_to_connect())
+    {
+        log_i("Scanning.");
+        canon_ble.scan(5);
+    }
+
+    Serial.println(canon_ble.get_device_address().toString().c_str());
+
+    for (int i = 0; i < 100; i++) {
+        try_connect();
+        delay(200);
+        if (canon_ble.is_connected()) {
+            log_i("connection successful");
+        } else {
+            log_e("connection failed");
+        }
+
+        delay(500);
+
+        canon_ble.disconnect();
+        delay(200);
+        if (!canon_ble.is_connected()) {
+            log_i("disconnection successful");
+        } else {
+            log_e("disconnection failed");
+        }
+
+        delay(500);
+    }
+}
+
+void loop()
+{
+    // Update buttons state
+    M5.update();
+
+    // Check connection state
+    // If disconnected, bump back to connecting
+    if (canon_ble.is_connected()) {
+        trigger_loop();
+    }
+    else {
+        M5_display.set_init_screen();
+        connect_loop();
+    }
+
+    
     delay(10);
+}
+
+void setup()
+{
+    esp_log_level_set("*", ESP_LOG_INFO); 
+
+    M5.begin();
+    current_mode = Shooting;
+    M5.Axp.ScreenBreath(9);
+    M5.Lcd.setRotation(1);
+    M5_display.set_init_screen();
+
+    connect_loop();
 }

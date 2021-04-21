@@ -16,6 +16,15 @@ public:
     void onResult(BLEAdvertisedDevice advertisedDevice);
 };
 
+class ConnectivityState: public BLEClientCallbacks {
+private: 
+    bool connected = false;
+public:
+    void onConnect(BLEClient* pclient) override;
+    void onDisconnect(BLEClient* pclient) override;
+    bool isConnected();
+};
+
 class CanonBLE
 {
 private:
@@ -37,6 +46,7 @@ private:
     const BLEUUID SHUTTER_CONTROL_SERVICE;
 
     BLEClient*  pclient  = BLEDevice::createClient();
+    ConnectivityState* pconnection_state = new ConnectivityState();
     BLEAddress ext_device_address = BLEAddress("");
     BLERemoteService* pRemoteService;
     BLERemoteCharacteristic* pRemoteCharacteristic_Pairing;
@@ -45,14 +55,17 @@ private:
     bool ready_to_connect = false;
     String device_name = "";
 
-public :
+public:
     CanonBLE(String name);
     void scan(int scan_duration);
     bool connect_to_device();
+    void disconnect();
     void trigger();
 
     bool is_ready_to_connect();
+    bool is_connected();
     BLEAddress get_device_address();
+    void print_service_description();
 };
 
 #endif
