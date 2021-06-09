@@ -27,13 +27,13 @@ void advdCallback::onResult(BLEAdvertisedDevice advertisedDevice)
 
 void ConnectivityState::onConnect(BLEClient *pclient)
 {
-    Serial.println("Device is connected");
+    // Serial.println("Device is connected");
     connected = true;
 }
 
 void ConnectivityState::onDisconnect(BLEClient *pclient)
 {
-    Serial.println("Device disconnnect");
+    // Serial.println("Device disconnnect");
     connected = false;
 }
 
@@ -84,17 +84,16 @@ void CanonBLERemote::init(){
     BLEDevice::init(device_name.c_str());
     BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
     BLEDevice::setSecurityCallbacks(new SecurityCallback());
-    Serial.println("Init");
-    // BLESecurity *pSecurity = new BLESecurity();
+
     if (nvs.begin()){
         log_e("Initialize NVS Success");
         String address = nvs.getString("cameraaddr");
 
         if(address.length() == 17){
-            Serial.printf("Paired camera address: %s\n", address.c_str());
+            // Serial.printf("Paired camera address: %s\n", address.c_str());
             camera_address = BLEAddress(address.c_str());
         }else{
-            Serial.println("No camera has been paired yet.");
+            // Serial.println("No camera has been paired yet.");
         }
 
     }else{
@@ -137,6 +136,7 @@ String CanonBLERemote::getPairedAddressString()
 
 bool CanonBLERemote::pair(unsigned int scan_duration)
 {
+    BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_MITM);
     log_i("Scanning for camera...");
     scan(scan_duration);
     unsigned long start_ms = millis();
@@ -146,7 +146,7 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
 
     if (ready_to_connect){
         log_i("Canon device found");
-        Serial.println(camera_address.toString().c_str());
+        // Serial.println(camera_address.toString().c_str());
     }else{
         log_i("Camera not found");
         return false;
@@ -172,7 +172,9 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
                 pRemoteCharacteristic_Pairing->writeValue(cmdPress, sizeof(cmdPress), false); // Writing to Canon_pairing_service
                 log_e("Camera paring success");
                 delay(2000);
+
                 disconnect();
+                BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
                 nvs.setString("cameraaddr", String(camera_address.toString().c_str()));
                 if(nvs.commit()){
                     log_i("Saving camera's address to NVS success");
@@ -216,33 +218,39 @@ void CanonBLERemote::disconnect()
 
 bool CanonBLERemote::trigger()
 {
+    // BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
 
     if (pclient->connect(camera_address))
     {
         pRemoteService = pclient->getService(SERVICE_UUID);
         if (pRemoteService != nullptr)
         {
-            Serial.println("Get remote service OK");
+            // Serial.println("Get remote service OK");
             pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
             if (pRemoteCharacteristic_Trigger != nullptr)
             {
                 Serial.println("Get trigger service OK");
-                byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_RELEASE};                  // Binary OR : Concatenate Mode and Button
-                pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte)); // Set the characteristic's value to be the array of bytes that is actually a string.
-                delay(100);
-                pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
+                byte cmdByte = {MODE_IMMEDIATE | BUTTON_RELEASE};                  // Binary OR : Concatenate Mode and Button
+                pRemoteCharacteristic_Trigger->writeValue(cmdByte, false); // Set the characteristic's value to be the array of bytes that is actually a string.
+                Serial.println("A");
+                delay(200);
+                Serial.println("B");
+                // pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
+                pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, false);
+                Serial.println("Write done");
+                delay(50);
                 disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did. 
                 return true;
             }
             else
             {
-                Serial.println("Get trigger service failed");
+                // Serial.println("Get trigger service failed");
             }
 
         }
         else
         {
-            log_e("Couldn't acquire the remote main service");
+            // log_e("Couldn't acquire the remote main service");
         }
         disconnect();
     }
@@ -257,11 +265,11 @@ bool CanonBLERemote::focus()
         pRemoteService = pclient->getService(SERVICE_UUID);
         if (pRemoteService != nullptr)
         {
-            Serial.println("Get remote service OK");
+            // Serial.println("Get remote service OK");
             pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
             if (pRemoteCharacteristic_Trigger != nullptr)
             {
-                Serial.println("Get trigger service OK");
+                // Serial.println("Get trigger service OK");
                 byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_FOCUS};                  // Binary OR : Concatenate Mode and Button
                 pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte)); // Set the characteristic's value to be the array of bytes that is actually a string.
                 delay(200);
@@ -271,13 +279,13 @@ bool CanonBLERemote::focus()
             }
             else
             {
-                Serial.println("Get trigger service failed");
+                // Serial.println("Get trigger service failed");
             }
 
         }
         else
         {
-            log_e("Couldn't acquire the remote main service");
+            // log_e("Couldn't acquire the remote main service");
         }
         disconnect();
     }
