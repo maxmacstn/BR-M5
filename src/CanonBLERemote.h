@@ -51,11 +51,11 @@ private:
     BLERemoteCharacteristic *pRemoteCharacteristic_Pairing;
     BLERemoteCharacteristic *pRemoteCharacteristic_Trigger;
     ArduinoNvs nvs;
-    bool connectCamera();
 
     bool ready_to_connect = false;
     String device_name = "";
     void scan(unsigned int  scan_duration);
+    bool connect();
     void disconnect();
 
 

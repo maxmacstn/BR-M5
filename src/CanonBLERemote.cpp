@@ -171,10 +171,11 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
                 cmdPress[0] = {0x03};
                 pRemoteCharacteristic_Pairing->writeValue(cmdPress, sizeof(cmdPress), false); // Writing to Canon_pairing_service
                 log_e("Camera paring success");
-                delay(2000);
-
+                delay(200);
                 disconnect();
                 BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
+                delay(200);
+                connect();
                 nvs.setString("cameraaddr", String(camera_address.toString().c_str()));
                 if(nvs.commit()){
                     log_i("Saving camera's address to NVS success");
@@ -201,9 +202,34 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
     return false;
 }
 
-bool CanonBLERemote::connectCamera()
+bool CanonBLERemote::connect()
 {
-    pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
+     if (pclient->connect(camera_address))
+        {
+            pRemoteService = pclient->getService(SERVICE_UUID);
+            if (pRemoteService != nullptr)
+            {
+                // Serial.println("Get remote service OK");
+                pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
+                if (pRemoteCharacteristic_Trigger != nullptr)
+                {
+                    Serial.println("Connection Success");
+                    // disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did. 
+                    return true;
+                }
+                else
+                {
+                    Serial.println("Get trigger service failed");
+                }
+
+            }
+            else
+            {
+                log_e("Couldn't acquire the remote main service");
+            }
+            disconnect();
+        }
+    return false;
 }
 
 void CanonBLERemote::disconnect()
@@ -218,76 +244,33 @@ void CanonBLERemote::disconnect()
 
 bool CanonBLERemote::trigger()
 {
-    // BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
 
-    if (pclient->connect(camera_address))
-    {
-        pRemoteService = pclient->getService(SERVICE_UUID);
-        if (pRemoteService != nullptr)
-        {
-            // Serial.println("Get remote service OK");
-            pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
-            if (pRemoteCharacteristic_Trigger != nullptr)
-            {
-                Serial.println("Get trigger service OK");
-                byte cmdByte = {MODE_IMMEDIATE | BUTTON_RELEASE};                  // Binary OR : Concatenate Mode and Button
-                pRemoteCharacteristic_Trigger->writeValue(cmdByte, false); // Set the characteristic's value to be the array of bytes that is actually a string.
-                Serial.println("A");
-                delay(200);
-                Serial.println("B");
-                // pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
-                pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, false);
-                Serial.println("Write done");
-                delay(50);
-                disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did. 
-                return true;
-            }
-            else
-            {
-                // Serial.println("Get trigger service failed");
-            }
-
-        }
-        else
-        {
-            // log_e("Couldn't acquire the remote main service");
-        }
-        disconnect();
+    if (!pconnection_state->isConnected()){
+        connect();
     }
-    return false;
+
+     byte cmdByte = {MODE_IMMEDIATE | BUTTON_RELEASE};                  // Binary OR : Concatenate Mode and Button
+        pRemoteCharacteristic_Trigger->writeValue(cmdByte, false); // Set the characteristic's value to be the array of bytes that is actually a string.
+        Serial.println("A");
+        delay(200);
+        Serial.println("B");
+        // pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
+        pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, false);
+        Serial.println("Write done");
+        delay(50);
+        return true;
+  
 }
 
 bool CanonBLERemote::focus()
 {
-
-    if (pclient->connect(camera_address))
-    {
-        pRemoteService = pclient->getService(SERVICE_UUID);
-        if (pRemoteService != nullptr)
-        {
-            // Serial.println("Get remote service OK");
-            pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
-            if (pRemoteCharacteristic_Trigger != nullptr)
-            {
-                // Serial.println("Get trigger service OK");
-                byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_FOCUS};                  // Binary OR : Concatenate Mode and Button
-                pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte)); // Set the characteristic's value to be the array of bytes that is actually a string.
-                delay(200);
-                pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
-                disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did. 
-                return true;
-            }
-            else
-            {
-                // Serial.println("Get trigger service failed");
-            }
-
-        }
-        else
-        {
-            // log_e("Couldn't acquire the remote main service");
-        }
-        disconnect();
+    if (!pconnection_state->isConnected()){
+        connect();
     }
-    return false;
+    byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_FOCUS};                  // Binary OR : Concatenate Mode and Button
+    pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte)); // Set the characteristic's value to be the array of bytes that is actually a string.
+    delay(200);
+    pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
+    return true;
+            
 }
