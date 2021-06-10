@@ -18,5 +18,13 @@
       }    
     ],
     "frameworks": "arduino",
-    "platforms": "esp32"
-  }
+    "platforms": "esp32",
+    "dependencies":
+    [
+        {
+            "owner": "rpolitex",
+            "name": "ArduinoNvs",
+            "version": "^2.5"
+        }
+      ]
+}
