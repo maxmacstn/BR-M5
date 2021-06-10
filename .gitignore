@@ -2,3 +2,4 @@
 .vscode
 .DS_Store
 video/
+.code-workspace

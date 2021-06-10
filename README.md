@@ -10,9 +10,11 @@ This library is adapted and inspired from [BR-M5](https://github.com/ArthurFDLR/
 * Auto re-connect.
 
 ## Installation
-- Platform IO Library Manager
-- Arduino IDE Library Manager
-- Manual installation by copying this repository to your `library` folder
+1. Install [ArduinoNvs]() library, uses to store paring data to ESP32 NVS storage.
+2. Install this library from the following way.
+  - Platform IO Library Manager
+  - Arduino IDE Library Manager
+  - Manual installation by copying this repository to your `library` folder
 
 ## Usage
 I'm highly recommend you to checkout example code to see how to use it.
