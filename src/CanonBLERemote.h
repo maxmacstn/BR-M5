@@ -63,6 +63,7 @@ public:
     CanonBLERemote(String name);
     void init();
     bool pair(unsigned int scan_duration);
+    bool isConnected();
 
     bool trigger();
     bool focus();

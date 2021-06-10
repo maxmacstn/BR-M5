@@ -2,8 +2,7 @@
 #include <Arduino.h>
 #include <BLEDevice.h>
 
-static const char* LOG_TAG = "MySecurity";
-
+static const char *LOG_TAG = "MySecurity";
 
 advdCallback::advdCallback(BLEUUID service_uuid, bool *ready_to_connect, BLEAddress *address_to_connect)
 {
@@ -42,61 +41,72 @@ bool ConnectivityState::isConnected()
     return connected;
 }
 
+class SecurityCallback : public BLESecurityCallbacks
+{
 
-class SecurityCallback : public BLESecurityCallbacks {
-
-	uint32_t onPassKeyRequest(){
-		return 123456;
-	}
-	void onPassKeyNotify(uint32_t pass_key){
+    uint32_t onPassKeyRequest()
+    {
+        return 123456;
+    }
+    void onPassKeyNotify(uint32_t pass_key)
+    {
         ESP_LOGE(LOG_TAG, "The passkey Notify number:%d", pass_key);
-	}
-	bool onConfirmPIN(uint32_t pass_key){
+    }
+    bool onConfirmPIN(uint32_t pass_key)
+    {
         ESP_LOGI(LOG_TAG, "The passkey YES/NO number:%d", pass_key);
-	    vTaskDelay(5000);
-		return true;
-	}
-	bool onSecurityRequest(){
-		ESP_LOGI(LOG_TAG, "Security Request");
-		return true;
-	}
-	void onAuthenticationComplete(esp_ble_auth_cmpl_t auth_cmpl){
-		if(auth_cmpl.success){
-			ESP_LOGI(LOG_TAG, "remote BD_ADDR:");
-			esp_log_buffer_hex(LOG_TAG, auth_cmpl.bd_addr, sizeof(auth_cmpl.bd_addr));
-			ESP_LOGI(LOG_TAG, "address type = %d", auth_cmpl.addr_type);
-		}
+        vTaskDelay(5000);
+        return true;
+    }
+    bool onSecurityRequest()
+    {
+        ESP_LOGI(LOG_TAG, "Security Request");
+        return true;
+    }
+    void onAuthenticationComplete(esp_ble_auth_cmpl_t auth_cmpl)
+    {
+        if (auth_cmpl.success)
+        {
+            ESP_LOGI(LOG_TAG, "remote BD_ADDR:");
+            esp_log_buffer_hex(LOG_TAG, auth_cmpl.bd_addr, sizeof(auth_cmpl.bd_addr));
+            ESP_LOGI(LOG_TAG, "address type = %d", auth_cmpl.addr_type);
+        }
         ESP_LOGI(LOG_TAG, "pair status = %s", auth_cmpl.success ? "success" : "fail");
-	}
+    }
 };
 
 CanonBLERemote::CanonBLERemote(String name) : SERVICE_UUID("00050000-0000-1000-0000-d8492fffa821"),
-                                  PAIRING_SERVICE("00050002-0000-1000-0000-d8492fffa821"),
-                                  SHUTTER_CONTROL_SERVICE("00050003-0000-1000-0000-d8492fffa821")
+                                              PAIRING_SERVICE("00050002-0000-1000-0000-d8492fffa821"),
+                                              SHUTTER_CONTROL_SERVICE("00050003-0000-1000-0000-d8492fffa821")
 {
     device_name = name;
     // Add our connection callback for state tracking.
     pclient->setClientCallbacks(pconnection_state);
-
 }
 
-void CanonBLERemote::init(){
+void CanonBLERemote::init()
+{
     BLEDevice::init(device_name.c_str());
     BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
     BLEDevice::setSecurityCallbacks(new SecurityCallback());
 
-    if (nvs.begin()){
+    if (nvs.begin())
+    {
         log_e("Initialize NVS Success");
         String address = nvs.getString("cameraaddr");
 
-        if(address.length() == 17){
+        if (address.length() == 17)
+        {
             // Serial.printf("Paired camera address: %s\n", address.c_str());
             camera_address = BLEAddress(address.c_str());
-        }else{
+        }
+        else
+        {
             // Serial.println("No camera has been paired yet.");
         }
-
-    }else{
+    }
+    else
+    {
         log_e("Initialize NVS Failed");
     }
 }
@@ -105,7 +115,7 @@ void CanonBLERemote::init(){
 //           When found -> advdCallback::OnResult
 void CanonBLERemote::scan(unsigned int scan_duration)
 {
-    
+
     log_i("Start BLE scan");
     BLEScan *pBLEScan = BLEDevice::getScan();
     advdCallback *advert_dev_callback = new advdCallback(SERVICE_UUID, &ready_to_connect, &camera_address);
@@ -144,10 +154,13 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
     {
     }
 
-    if (ready_to_connect){
+    if (ready_to_connect)
+    {
         log_i("Canon device found");
         // Serial.println(camera_address.toString().c_str());
-    }else{
+    }
+    else
+    {
         log_i("Camera not found");
         return false;
     }
@@ -177,10 +190,13 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
                 delay(200);
                 connect();
                 nvs.setString("cameraaddr", String(camera_address.toString().c_str()));
-                if(nvs.commit()){
+                if (nvs.commit())
+                {
                     log_i("Saving camera's address to NVS success");
                     return true;
-                }else{
+                }
+                else
+                {
                     log_e("Storing camera's address to NVS failed");
                     return false;
                 }
@@ -204,37 +220,41 @@ bool CanonBLERemote::pair(unsigned int scan_duration)
 
 bool CanonBLERemote::connect()
 {
-     if (pclient->connect(camera_address))
+    if (pclient->connect(camera_address))
+    {
+        pRemoteService = pclient->getService(SERVICE_UUID);
+        if (pRemoteService != nullptr)
         {
-            pRemoteService = pclient->getService(SERVICE_UUID);
-            if (pRemoteService != nullptr)
+            // Serial.println("Get remote service OK");
+            pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
+            if (pRemoteCharacteristic_Trigger != nullptr)
             {
-                // Serial.println("Get remote service OK");
-                pRemoteCharacteristic_Trigger = pRemoteService->getCharacteristic(SHUTTER_CONTROL_SERVICE);
-                if (pRemoteCharacteristic_Trigger != nullptr)
-                {
-                    Serial.println("Connection Success");
-                    // disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did. 
-                    return true;
-                }
-                else
-                {
-                    Serial.println("Get trigger service failed");
-                }
-
+                log_i("Camera connection Success");
+                // disconnect();       // Disconnect remote from the camera every time after action, as the real canon remote did.
+                return true;
             }
             else
             {
-                log_e("Couldn't acquire the remote main service");
+                log_e("Get trigger service failed");
             }
-            disconnect();
         }
+        else
+        {
+            log_e("Couldn't acquire the remote main service");
+        }
+        disconnect();
+    }
     return false;
 }
 
 void CanonBLERemote::disconnect()
 {
     pclient->disconnect();
+}
+
+bool CanonBLERemote::isConnected()
+{
+    return pconnection_state->isConnected();
 }
 
 /** Trigger Camera 
@@ -245,32 +265,34 @@ void CanonBLERemote::disconnect()
 bool CanonBLERemote::trigger()
 {
 
-    if (!pconnection_state->isConnected()){
-        connect();
+    if (!isConnected())
+    {
+        if (!connect())
+        {
+            return false;
+        }
     }
 
-     byte cmdByte = {MODE_IMMEDIATE | BUTTON_RELEASE};                  // Binary OR : Concatenate Mode and Button
-        pRemoteCharacteristic_Trigger->writeValue(cmdByte, false); // Set the characteristic's value to be the array of bytes that is actually a string.
-        Serial.println("A");
-        delay(200);
-        Serial.println("B");
-        // pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
-        pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, false);
-        Serial.println("Write done");
-        delay(50);
-        return true;
-  
+    byte cmdByte = {MODE_IMMEDIATE | BUTTON_RELEASE};          // Binary OR : Concatenate Mode and Button
+    pRemoteCharacteristic_Trigger->writeValue(cmdByte, false); // Set the characteristic's value to be the array of bytes that is actually a string.
+    delay(200);
+    pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, false);
+    delay(50);
+    return true;
 }
 
 bool CanonBLERemote::focus()
 {
-    if (!pconnection_state->isConnected()){
-        connect();
+    if (!isConnected())
+    {
+        if (!connect())
+        {
+            return false;
+        }
     }
-    byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_FOCUS};                  // Binary OR : Concatenate Mode and Button
+    byte cmdByte[] = {MODE_IMMEDIATE | BUTTON_FOCUS};                    // Binary OR : Concatenate Mode and Button
     pRemoteCharacteristic_Trigger->writeValue(cmdByte, sizeof(cmdByte)); // Set the characteristic's value to be the array of bytes that is actually a string.
     delay(200);
     pRemoteCharacteristic_Trigger->writeValue(MODE_IMMEDIATE, sizeof(MODE_IMMEDIATE));
     return true;
-            
 }

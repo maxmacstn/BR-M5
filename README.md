@@ -1,46 +1,38 @@
-[![BR-M5 | Open-Source Bluetooth Remote for Canon DSLRs](./.github/cover.png)](https://youtu.be/Gh5uEc2dNJM "BR-M5 | Open-Source Bluetooth Remote for Canon DSLRs")
+[![Bluetooth Remote for Modern Canon Cameras](./.github/cover.png)](https://youtu.be/Gh5uEc2dNJM "BR-M5 | Open-Source Bluetooth Remote for Canon DSLRs")
 
-# BR-M5: An open-source Bluetooth Remote for Canon DSLRs
+# Canon BLE Remote 
+This Bluetooth remote library aims to replicate Canon's BR-E1 bluetooth remote behavior since modern Canon Cameras doesn't have wired shutter trigger port anymore. Ex. EOS M50, EOS R, EOS EP
+This library is adapted and inspired from [BR-M5](https://github.com/ArthurFDLR/BR-M5)
 
-This Bluetooth remote aims to replicate Canon's BR-E1 behavior while adding key features like fully programable time-lapses that most Canon cameras lack! Fortunately, *M5Stack* proposes a nice little inexpensive development board that perfectly fits our needs, the [M5Stick-Cplus](https://m5stack.com/products/m5stickc-plus-esp32-pico-mini-iot-development-kit?variant=35275856609444).
-
-The BR-M5 has been primarily developed for the Canon M50 Mark I, which misses a descent timelapse mode that can do long exposures. The shutter speed option in M50's timelapse mode is indeed limited to 1/30s. Furthermore, the M50 doesn't have any shutter release port to plug classic intervalometers. No official Bluetooth, WiFi, or tethering tools currently offer time-lapse capabilities.
+## Features
+* Single firing and focus commands.
+* Pair and remember. (Paring is only required for initial connection)
+* Auto re-connect.
 
 ## Installation
+- Platform IO Library Manager
+- Arduino IDE Library Manager
+- Manual installation by copying this repository to your `library` folder
 
-* Install [Visual Studio Code](https://code.visualstudio.com/download) and the [PlatformIO IDE](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) extension.
-* Clone this repository - ```git clone https://github.com/ArthurFDLR/br-m5``` -, open it as project in PlatformIO and upload - ```Ctrl+Alt+u``` - to a M5Stick-Cplus connected to your PC.
+## Usage
+I'm highly reccommended to checkout example code to see how to use it.
 
-## How-To-Use
+1.  On camera, go to Wireless Communication Settings > Bluetooth Function > set bluetooth function to Remote. Clear all existing connection (if necesary) and press Pairing.
+2.  Call `pair()` function. If you're trying this sample code, press shutter button while booting ESP32 to enter pairing mode.
+3.  For picture mode, enable remote shutter in drive mode menu (Self-timer:10s/Remote). For video mode, press menu button and enable remote control.
 
-* Power on by pressing the left-side button and power off with a 6 seconds press on the same button.
-* You can connect to your Canon DSLR as soon as the remote is powered on and displays *Pairing in progress*.
-* To change the interval, press the right-side button for half a second and use the same button to increase and the center button to decrease the timelapse interval. Once set, press the right-side button for half a second again.
-* Start and stop time-lapses using the center button. The remote takes single shots if the interval is set to 0 seconds.
+If paring doesn’t work, clear all existing connection, power off and re-insert battery (necessary), then try again. 
 
+## Tested device(s)
+- Canon EOS M50 (EOS Kiss M)
+(Feel free to help me confirm with other cameras, but technically, it should works)
 
 ## Background Info
-
-https://iandouglasscott.com/2017/09/04/reverse-engineering-the-canon-t7i-s-bluetooth-work-in-progress/
-
-https://iandouglasscott.com/2018/07/04/canon-dslr-bluetooth-remote-protocol/
-
-https://randomnerdtutorials.com/esp32-bluetooth-low-energy-ble-arduino-ide/
-
-https://github.com/espressif/arduino-esp32/issues/893
-
-https://github.com/espressif/arduino-esp32/issues/3721
-
-Connection times out after 180s (3m) regardless of trigger input.
-
-Reconnecting within a 3m window works, but once the window elapses stops working. 
-
-Reconnecting after 3 minutes does not work. 
+- [CB Remote Android App](https://github.com/iebyt/cbremote)
+- [Canon DSLR Bluetooth Remote Protocol Reverse Engineering](https://iandouglasscott.com/2018/07/04/canon-dslr-bluetooth-remote-protocol/)
 
 ## To-do
-
-- [ ] Fix connection reliability issues.
-- [ ] Auto connection to camera when remote start-up.
-- [ ] Add battery level indication.
+- [ ] Add support for W/T buttons.
+- [ ] Optimize and cleanup code.
 
 Feel free to contribute!

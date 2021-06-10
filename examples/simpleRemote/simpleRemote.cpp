@@ -34,7 +34,7 @@ void setup()
     delay(1000);
     // Pairing
     if(digitalRead(SHUTTTER_BTN) == LOW ){
-        blinker.attach_ms(500,blink);
+        blinker.attach_ms(200,blink);
 
         // pair() function should be called only when you want to pair with the new camera. 
         // After paired, the pair() function should not be called.
@@ -44,6 +44,8 @@ void setup()
         while(!canon_ble.pair(10));
 
         blinker.detach();
+        digitalWrite(LED, HIGH);
+
     }
 
 
