@@ -7,8 +7,8 @@
 #include "esp_log.h"
 #include <esp32-hal-log.h>
 
-#define SHUTTTER_BTN    13
-#define FOCUS_BTN   9
+#define SHUTTTER_BTN    14
+#define FOCUS_BTN   12
 #define LED 2
 
 String name_remote = "ESP32 Remote";
