@@ -1,4 +1,5 @@
 [![Bluetooth Remote for Modern Canon Cameras](./.github/cover.png)](https://www.youtube.com/watch?v=mM_tIqrD_5A "ESP32 Canon BLE Remote Library Demo")
+[Demo Video](https://www.youtube.com/watch?v=mM_tIqrD_5A)
 
 # ESP32 Canon BLE Remote Library
 This Bluetooth remote library aims to replicate Canon's BR-E1 bluetooth remote behavior since modern Canon Cameras doesn't have wired shutter trigger port anymore. Ex. EOS M50, EOS R, EOS EP
