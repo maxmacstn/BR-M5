@@ -1,4 +1,4 @@
-[![Bluetooth Remote for Modern Canon Cameras](./.github/cover.png)](https://www.youtube.com/watch?v=mM_tIqrD_5A "ESP32 Canon BLE Remote Library Demo")
+[![Bluetooth Remote for Modern Canon Cameras](./.github/cover.jpg)](https://www.youtube.com/watch?v=mM_tIqrD_5A "ESP32 Canon BLE Remote Library Demo")
 [Demo Video](https://www.youtube.com/watch?v=mM_tIqrD_5A)
 
 # ESP32 Canon BLE Remote Library
