@@ -12,7 +12,7 @@ This library is adapted and inspired from [BR-M5](https://github.com/ArthurFDLR/
 * Auto re-connect.
 
 ## Installation
-1. Install [ArduinoNvs]() library, uses to store paring data to ESP32 NVS storage.
+1. Install [ArduinoNvs](https://github.com/rpolitex/ArduinoNvs) library, uses to store paring data to ESP32 NVS storage.
 2. Install this library from the following way.
   - [Platform IO Library Manager](https://platformio.org/lib/show/12410/Canon%20BLE%20Remote/)
   - Arduino IDE Library Manager
