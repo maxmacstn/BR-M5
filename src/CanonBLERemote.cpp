@@ -111,6 +111,34 @@ void CanonBLERemote::init()
     }
 }
 
+void CanonBLERemote::init(String _new_name = "")
+{
+    if(_new_name != "") device_name = _new_name;
+    BLEDevice::init(device_name.c_str());
+    BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT_NO_MITM);
+    BLEDevice::setSecurityCallbacks(new SecurityCallback());
+
+    if (nvs.begin())
+    {
+        log_e("Initialize NVS Success");
+        String address = nvs.getString("cameraaddr");
+
+        if (address.length() == 17)
+        {
+            // Serial.printf("Paired camera address: %s\n", address.c_str());
+            camera_address = BLEAddress(address.c_str());
+        }
+        else
+        {
+            // Serial.println("No camera has been paired yet.");
+        }
+    }
+    else
+    {
+        log_e("Initialize NVS Failed");
+    }
+}
+
 // Purpose : Scanning for new BLE devices around.
 //           When found -> advdCallback::OnResult
 void CanonBLERemote::scan(unsigned int scan_duration)
